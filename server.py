@@ -11,10 +11,11 @@ def index():
             raise Exception('missing query')
         query = request.query.query
         dest, post_date = download_latest_warta()
+        post_date_str = post_date.strftime('%Y-%m-%dT%H:%M:%S') if post_date else None
         service_date, task_name, service_no, original_text = search_name_in_warta(dest, query)
         return json.dumps({
             'query': query,
-            'post_date': post_date,
+            'post_date': post_date_str,
             'service_date': service_date,
             'task_name': task_name,
             'service_no': service_no,
