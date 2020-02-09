@@ -14,6 +14,7 @@ def index():
         service_date, task_name, service_no, original_text = search_name_in_warta(dest, query)
         return json.dumps({
             'query': query,
+            'post_date': post_date,
             'service_date': service_date,
             'task_name': task_name,
             'service_no': service_no,
@@ -23,4 +24,8 @@ def index():
         response.status = 500
         return json.dumps({'error': str(err)})
 
-run(host='localhost', server='tornado', port=5000)
+if __name__ == "__main__":
+    import sys
+    port = sys.argv[1] if len(sys.argv) > 1 else 5000
+
+    run(host='localhost', server='tornado', port=port)

@@ -85,10 +85,13 @@ def download_latest_warta():
     return dest, post_date
 
 def search_name_in_warta(path, search_name):
+    '''
+    Search search_name in certain page of PDF in given path
+    '''
     service_date, task_name, service_no, original_text = (None, None, None, None)
     date_pattern = re.compile("\((\w+,\s*\d{1,2}\s*\w+\s*\d{4})\)")
-    # assume information is in page 2 and 3 (start from 0)
-    dataframes = read_pdf(path, pages=[2, 3], silent=True)
+    # assume information is in page 3 (start from 0)
+    dataframes = read_pdf(path, pages=[3], silent=True)
     for df in dataframes:
         if not df.empty:
             res = [df[col].astype(str).str.contains(search_name, na=False, flags=re.IGNORECASE) for col in df]
@@ -100,12 +103,12 @@ def search_name_in_warta(path, search_name):
                 match = date_pattern.search(service_date)
                 if match:
                     service_date = match[1]
-                arr = df_found.to_numpy(dtype=np.unicode_)
+                arr = df_found.dropna(axis=1).to_numpy(dtype=np.unicode_)
                 task_name = arr[0][0]                
                 for i in range(1, arr.shape[1]):
                     s = arr[0][i].replace('\r', ', ')
                     if search_name.lower() in s.lower():
-                        service_no = i - 1
+                        service_no = i
                         original_text = s
                         break
     return service_date, task_name, service_no, original_text
@@ -115,8 +118,10 @@ if __name__ == "__main__":
     import sys
     query = sys.argv[1]
     dest, post_date = download_latest_warta()
+    # dest, post_date = ('WARTA_20200201.PDF', datetime.now())
     service_date, task_name, service_no, original_text = search_name_in_warta(dest, query)
-    if original_text:
+    print('Latest post date: {}'.format(post_date))
+    if original_text:        
         print(service_date)
         print('Tugas {}'.format(task_name))
         print('Kebaktian ke-{}'.format(service_no))
