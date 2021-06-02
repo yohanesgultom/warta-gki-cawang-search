@@ -13,4 +13,4 @@ six==1.14.0
 soupsieve==1.9.5
 tabula-py==2.0.4
 tornado==6.0.3
-urllib3==1.25.8
+urllib3==1.26.5
