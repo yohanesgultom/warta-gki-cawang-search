@@ -2,21 +2,21 @@
 
 Search for text in [Warta GKI Cawang PDF](http://gki-cawang.org/category/media/warta-jemaat/)
 
-## Buid and Run
+## Usage
 
-Build
+Build Docker image:
 
 ```
 docker build . -t warta-gki-cawang-api:latest
 ```
 
-Run simple search
+Search for text "Siregar":
 
 ```
 docker run --rm warta-gki-cawang-api:latest python warta.py Siregar
 ```
 
-Run API server
+Run API server and search for text "Siregar":
 
 ```
 docker run --rm -d -p 5000:5000 warta-gki-cawang-api:latest
