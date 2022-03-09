@@ -26,7 +26,7 @@ def download_file_from_google_drive(id, destination):
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
 
-    URL = "https://docs.google.com/uc?export=download"
+    URL = "https://drive.google.com/u/0/uc?&export=download"
     session = requests.Session()
     response = session.get(URL, params = { 'id' : id }, stream = True)
     token = get_confirm_token(response)
@@ -55,7 +55,7 @@ def get_doc_id_from_post(post_url):
     page = requests.get(post_url)
     soup = BeautifulSoup(page.text, 'html.parser')
     links = soup.select('.post_content a')
-    pattern = re.compile("id=([^\s]+)$")
+    pattern = re.compile("/d/([^\s]+)/")
     for link in links:
         if 'warta jemaat' in link.string.lower():
             match = pattern.search(link['href'])
@@ -73,9 +73,12 @@ def download_latest_warta():
     # 7 = warta jemaat
     base_url = 'http://gki-cawang.org'
     post_date, post_url = get_latest_wp_post_url(base_url, 7)
-    # print('Post date: {}'.format(post_date))
+    # print('post_date: {}'.format(post_date))
+    print('post_url: {}'.format(post_url))
     doc_id, doc_url, label = get_doc_id_from_post(post_url)
-    # print(label, doc_url)
+    # print('doc_id: {}'.format(doc_id))
+    print('doc_url: {}'.format(doc_url))
+    # print('label: {}'.format(label))
     dest = 'WARTA_{}.PDF'.format(post_date.strftime('%Y%m%d'))
     # download if not yet done
     if not Path(dest).is_file():
@@ -88,30 +91,21 @@ def search_name_in_warta(path, search_name):
     '''
     Search search_name in certain page of PDF in given path
     '''
+    results = []
     service_date, task_name, service_no, original_text = (None, None, None, None)
     date_pattern = re.compile("\((\w+,\s*\d{1,2}\s*\w+\s*\d{4})\)")
-    # assume information is in page 3 (start from 0)
-    dataframes = read_pdf(path, pages=[3], silent=True)
+    dataframes = read_pdf(path, pages="all", silent=True)
     for df in dataframes:
         if not df.empty:
             res = [df[col].astype(str).str.contains(search_name, na=False, flags=re.IGNORECASE) for col in df]
             mask = np.column_stack(res)
             df_found = df.loc[mask.any(axis=1)]
             if not df_found.empty:
-                service_date = df_found.columns[0]
-                # attempt to extract date only
-                match = date_pattern.search(service_date)
-                if match:
-                    service_date = match[1]
                 arr = df_found.dropna(axis=1).to_numpy(dtype=np.unicode_)
-                task_name = arr[0][0]                
-                for i in range(1, arr.shape[1]):
-                    s = arr[0][i].replace('\r', ', ')
-                    if search_name.lower() in s.lower():
-                        service_no = i
-                        original_text = s
-                        break
-    return service_date, task_name, service_no, original_text
+                match_text = ' '.join(arr.flatten())
+                print(match_text)
+                results.append(match_text)
+    return results
             
 
 if __name__ == "__main__":
@@ -119,12 +113,12 @@ if __name__ == "__main__":
     query = sys.argv[1]
     dest, post_date = download_latest_warta()
     # dest, post_date = ('WARTA_20200201.PDF', datetime.now())
-    service_date, task_name, service_no, original_text = search_name_in_warta(dest, query)
-    print('Latest post date: {}'.format(post_date))
-    if original_text:        
-        print(service_date)
-        print('Tugas {}'.format(task_name))
-        print('Kebaktian ke-{}'.format(service_no))
-        print(original_text)
-    else:
-        print('Tidak ditemukan')
+    results = search_name_in_warta(dest, query)
+    # print('Latest post date: {}'.format(post_date))
+    # if original_text:        
+    #     print(service_date)
+    #     print('Tugas {}'.format(task_name))
+    #     print('Kebaktian ke-{}'.format(service_no))
+    #     print(original_text)
+    # else:
+    #     print('Tidak ditemukan')
