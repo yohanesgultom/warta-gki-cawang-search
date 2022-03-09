@@ -1,6 +1,6 @@
 beautifulsoup4==4.8.2
 bottle==0.12.19
-numpy==1.18.1
+numpy==1.21.0
 requests==2.22.0
 tabula-py==2.0.4
 tornado==6.0.3
