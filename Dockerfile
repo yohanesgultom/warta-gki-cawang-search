@@ -1,8 +1,8 @@
-FROM python:3.7.12-slim-buster
-RUN apt-get update && apt-get install -y openjdk-11-jre-headless
-RUN export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && export PATH=$JAVA_HOME/bin:$PATH
-WORKDIR /app
-COPY . .
-RUN pip install -r requirements.txt
-EXPOSE 5000
-CMD python server.py
+FROM maven:3.8.4-openjdk-17-slim AS builder
+WORKDIR /usr/src/app
+COPY . /usr/src/app
+RUN mvn clean test package
+
+FROM openjdk:17-alpine
+WORKDIR /opt/app
+COPY --from=builder /usr/src/app/target/*.jar /opt/app/app.jar

@@ -1,4 +1,8 @@
 __pycache__/
 venv/
+target
+.idea
+*.iml
+*.log
 *.pdf
 *.PDF
