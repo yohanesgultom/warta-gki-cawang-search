@@ -1,5 +1,6 @@
 package id.gultom.warta;
 
+import id.gultom.warta.dto.Warta;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -14,8 +15,8 @@ public class ApplicationTest {
     @Disabled
     public void testDownloadLatestWartaPdf() {
         try {
-            String path = Application.downloadLatestWartaPdf();
-            assertTrue(new File(path).exists());
+            Warta warta = Application.downloadLatestWartaPdf();
+            assertTrue(new File(warta.getPath()).exists());
         } catch (Exception e) {
             assertTrue(false, "Download failed");
         }

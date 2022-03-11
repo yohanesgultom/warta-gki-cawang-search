@@ -6,3 +6,4 @@ target
 *.log
 *.pdf
 *.PDF
+config.properties
