@@ -3,6 +3,7 @@ package id.gultom.warta;
 import id.gultom.warta.dto.Warta;
 import id.gultom.warta.service.DownloadService;
 import id.gultom.warta.service.EmailService;
+import id.gultom.warta.service.WaService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -22,9 +24,16 @@ public class Application {
     private DownloadService downloadService;
     private EmailService emailService;
 
+    private WaService waService;
+
     public Application(DownloadService downloadService, EmailService emailService) {
         this.downloadService = downloadService;
         this.emailService = emailService;
+    }
+
+    public Application(DownloadService downloadService, WaService waService) {
+        this.downloadService = downloadService;
+        this.waService = waService;
     }
 
     public List<String> findPdfPagesContainingQuery(String filePath, String query) throws IOException {
@@ -44,7 +53,7 @@ public class Application {
         return pageNumbers;
     }
 
-    private void reportException(Exception e) {
+    private void reportExceptionEmail(Exception e) {
         try {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -54,7 +63,17 @@ public class Application {
         }
     }
 
-    public void run(String query, String emails) {
+    private void reportExceptionWa(Exception e) {
+        try {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            waService.send("Warta GKI Cawang Error: " + sw, "6281311525264");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void runEmail(String query, String emails) {
         try {
             Warta warta = downloadService.downloadLatestWartaPdf();
             List<String> pages = findPdfPagesContainingQuery(warta.getPath(), query);
@@ -74,18 +93,44 @@ public class Application {
             emailService.sendWithAttachment(warta.getPath(), subject, body, emails);
         } catch (Exception e) {
             e.printStackTrace();
-            reportException(e);
+            reportExceptionEmail(e);
+        }
+    }
+
+    public void runWa(String query, String waNumbers) {
+        try {
+            Warta warta = downloadService.downloadLatestWartaPdf();
+            List<String> pages = findPdfPagesContainingQuery(warta.getPath(), query);
+            String body;
+            if (pages.isEmpty()) {
+                body = String.format("\uD83D\uDFE1 _%s_ can not be found in Warta.", query);
+            } else {
+                body = String.format("\uD83D\uDFE2 _%s_ found in Warta on page(s): *%s*.", query, String.join(", ", pages));
+            }
+            String postDateStr = warta.getPostDate().format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
+            String subject = String.format("⛪ Warta GKI Cawang %s", postDateStr);
+            body = String.join("\\n\\n", subject, body, "Please check file below for more details.");
+            waService.sendWithAttachment(warta.getPath(), body, waNumbers);
+        } catch (Exception e) {
+            e.printStackTrace();
+            reportExceptionWa(e);
         }
     }
 
     public static void main(String[] args) throws IOException {
         String query = args[0];
-        String emails = args[1];
+        String recipents = args[1]; // comma separated emails or numbers
         HttpClient httpClient = HttpClient.newBuilder().build();
+        // email
+//        DownloadService downloadService = new DownloadService(httpClient);
+//        EmailService notifService = new EmailService();
+//        Application application = new Application(downloadService, notifService);
+//        application.runEmail(query, recipents);
+        // wa
         DownloadService downloadService = new DownloadService(httpClient);
-        EmailService emailService = new EmailService();
-        Application application = new Application(downloadService, emailService);
-        application.run(query, emails);
+        WaService notifService = new WaService(httpClient);
+        Application application = new Application(downloadService, notifService);
+        application.runWa(query, recipents);
     }
 
 }

@@ -75,7 +75,7 @@ public class ApplicationTest {
             when(downloadService.downloadLatestWartaPdf()).thenReturn(testWarta);
 
             // test
-            application.run("Eveline", "test@email.com");
+            application.runEmail("Eveline", "test@email.com");
 
             // verify
             ArgumentCaptor<String> attachmentCaptor = ArgumentCaptor.forClass(String.class);
@@ -115,7 +115,7 @@ public class ApplicationTest {
             when(downloadService.downloadLatestWartaPdf()).thenReturn(testWarta);
 
             // test
-            application.run("Kamen Rider", "test@email.com");
+            application.runEmail("Kamen Rider", "test@email.com");
 
             // verify
             ArgumentCaptor<String> attachmentCaptor = ArgumentCaptor.forClass(String.class);
